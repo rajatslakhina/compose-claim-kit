@@ -13,7 +13,7 @@ enum ResolveReader {
         var claims: [ComposeClaim] = []
         for (index, piece) in pieces.enumerated() where piece.isCode && Interpolation.hasVariables(piece.text) {
             guard index + 1 < pieces.count else { continue }
-            let after = " " + pieces[index + 1].text.folded.trimmed + " "
+            let after = spaced(pieces[index + 1].text)
             guard let claimed = claimed(after: after, next: index + 2 < pieces.count ? pieces[index + 2].text : nil)
             else { continue }
             let resolves = ComposeClaim.Resolves(expression: piece.text, condition: condition(pieces, skipping: index),
@@ -37,6 +37,12 @@ enum ResolveReader {
         return nil
     }
 
+    /// The prose folded, with punctuation as space and a space at each end.
+    static func spaced(_ text: String) -> String {
+        let plain = String(text.folded.map { ",;:!?()".contains($0) ? " " : $0 })
+        return " " + plain.split(separator: " ").joined(separator: " ") + " "
+    }
+
     /// "when `TAG` is unset", "if `TAG` is empty", "with `TAG=1.2`", "when `TAG` is set to `1.2`".
     static func condition(_ pieces: [(text: String, isCode: Bool)], skipping expression: Int)
         -> ResolveCondition? {
@@ -48,7 +54,7 @@ enum ResolveReader {
                 return value.isEmpty ? .empty(name) : .set(name, value)
             }
             guard Names.isName(code), index + 1 < pieces.count else { continue }
-            let after = " " + pieces[index + 1].text.folded.trimmed + " "
+            let after = spaced(pieces[index + 1].text)
             let unset = [" is unset ", " is not set ", " isn't set ", " is undefined ", " is missing ", " unset ",
                          " is not defined "]
             let empty = [" is empty ", " is blank ", " is set to an empty string ", " is set but empty ",

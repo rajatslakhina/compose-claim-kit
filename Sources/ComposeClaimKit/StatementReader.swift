@@ -73,7 +73,7 @@ enum StatementReader {
     static func precedence(_ text: String) -> [Statement] {
         var found: [Statement] = []
         if text.contains(" .env "), Words.containsAny(text, ["shell", "exported", "export", "your environment"]) {
-            found += winner(text, first: [" .env "], second: ["shell", "exported", "export", "your environment"],
+            found += winner(text, first: [".env"], second: ["shell", "exported", "export", "your environment"],
                             firstWins: .dotEnvBeatsShell, secondWins: .shellBeatsDotEnv)
         }
         if text.contains("env_file"), text.contains("environment") {
@@ -83,23 +83,42 @@ enum StatementReader {
         return found
     }
 
+    /// The first verb with one source before it and the other after it decides.
     static func winner(_ text: String, first: [String], second: [String], firstWins: Statement,
                        secondWins: Statement) -> [Statement] {
-        let verbs = (winVerbs.map { ($0, true) } + loseVerbs.map { ($0, false) })
-            .compactMap { verb, active in text.range(of: " " + verb + " ").map { ($0, active) } }
-        guard let (verb, active) = verbs.min(by: { $0.0.lowerBound < $1.0.lowerBound }) else { return [] }
-        let before = String(text[..<verb.lowerBound])
-        let firstBefore = first.compactMap { before.range(of: $0, options: .backwards)?.lowerBound }.max()
-        let secondBefore = second.compactMap { before.range(of: $0, options: .backwards)?.lowerBound }.max()
-        let subjectIsFirst: Bool
-        switch (firstBefore, secondBefore) {
-        case let (one?, two?): subjectIsFirst = one > two
-        case (_?, nil): subjectIsFirst = true
-        case (nil, _?): subjectIsFirst = false
-        case (nil, nil): return []
+        let verbs = (winVerbs.map { ($0, true) } + loseVerbs.map { ($0, false) }).flatMap { verb, active in
+            ranges(of: " " + verb + " ", in: text).map { ($0, active) }
+        }.sorted { $0.0.lowerBound < $1.0.lowerBound }
+        for (verb, active) in verbs {
+            let before = String(text[..<verb.lowerBound])
+            let after = String(text[verb.upperBound...])
+            let subjectIsFirst: Bool
+            if let one = last(first, in: before), last(second, in: before).map({ one > $0 }) ?? true,
+               second.contains(where: after.contains) {
+                subjectIsFirst = true
+            } else if last(second, in: before) != nil, first.contains(where: after.contains) {
+                subjectIsFirst = false
+            } else {
+                continue
+            }
+            let negatedVerb = negated(text, before: [String(text[verb]).trimmed]) ?? false
+            return [(subjectIsFirst == active) != negatedVerb ? firstWins : secondWins]
         }
-        let negatedVerb = negated(text, before: [String(text[verb]).trimmed]) ?? false
-        return [(subjectIsFirst == active) != negatedVerb ? firstWins : secondWins]
+        return []
+    }
+
+    static func last(_ terms: [String], in text: String) -> String.Index? {
+        terms.compactMap { text.range(of: $0, options: .backwards)?.lowerBound }.max()
+    }
+
+    static func ranges(of phrase: String, in text: String) -> [Range<String.Index>] {
+        var found: [Range<String.Index>] = []
+        var start = text.startIndex
+        while let range = text.range(of: phrase, range: start..<text.endIndex) {
+            found.append(range)
+            start = range.upperBound
+        }
+        return found
     }
 
     static func expose(_ raw: String, _ text: String) -> [Statement] {

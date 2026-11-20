@@ -62,13 +62,14 @@ public actor ComposeLedger {
         let about = ComposeClaimReader.isAboutCompose(text) || ComposeClaimReader.isAboutCompose(context)
         let all = checker.reader.allClaims(in: text, earlier: scene)
         ComposeClaimReader.remember(text, into: &scene)
-        var findings = checker.report(about ? all : all.filter { flaggedKeys.contains($0.key) }).findings
-        var keys: Set<String> = []
+        let considered = about ? all : all.filter { flaggedKeys.contains($0.key) }
+        var findings = checker.report(considered).findings
         for index in findings.indices where findings[index].severity >= .caution {
             findings[index].isRepeated = flaggedKeys.contains(findings[index].key)
-            keys.insert(findings[index].key)
         }
-        flaggedKeys.formUnion(keys)
+        // A finding left out as the same mistake as another still counts as flagged, so stating it alone later is
+        // a repeat.
+        flaggedKeys.formUnion(considered.map(checker.judge).filter { $0.severity >= .caution }.map(\.key))
         let report = ComposeReport(findings: findings)
         statistics.reviews += 1
         statistics.claims += findings.count

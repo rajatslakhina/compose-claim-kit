@@ -12,7 +12,7 @@ extension ComposeFinding {
 
     func addressExplanation(_ address: ComposeClaim.Address) -> String {
         let said = "`\(address.host):\(address.port)`"
-        let place = address.variable.map { "`\($0)` in `\(Self.from(address) ?? "")` points at \(said)" } ?? said
+        let place = address.variable.map { "`\($0)` in `\(Self.from(address) ?? "")` (\(said))" } ?? said
         let actual = self.actual ?? ""
         switch outcome {
         case .exact:
@@ -105,10 +105,12 @@ extension ComposeFinding {
         switch line {
         case let .undefinedDependency(name):
             "`\(service)` depends on `\(name)`, which the file does not define, so `docker compose` refuses the "
-                + "file (\"\(actual ?? "")\")."
+                + "file with: \(actual ?? "")."
+
         case let .healthyWithoutHealthcheck(name):
             "`\(service)` waits for `\(name)` to be healthy, but `\(name)` has no `healthcheck:`; unless its image "
-                + "defines a HEALTHCHECK, `docker compose up` stops with \"\(actual ?? "")\"."
+                + "defines a HEALTHCHECK, `docker compose up` stops with: \(actual ?? "")."
+
         }
     }
 

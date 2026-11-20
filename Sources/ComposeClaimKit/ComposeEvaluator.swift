@@ -155,7 +155,7 @@ struct ComposeEvaluator {
                            actual: "service \"\(service)\" depends on undefined service \"\(name)\"")
         case let .healthyWithoutHealthcheck(name):
             ComposeFinding(claim: claim, outcome: .caveat(.imageMayHaveHealthcheck),
-                           actual: "container for \"\(name)\" has no healthcheck configured")
+                           actual: "dependency failed to start: container <project>-\(name)-1 has no healthcheck configured")
         }
     }
 }

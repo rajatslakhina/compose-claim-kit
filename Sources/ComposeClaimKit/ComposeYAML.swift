@@ -18,9 +18,10 @@ enum ComposeYAML {
         for (offset, raw) in source.components(separatedBy: "\n").enumerated() {
             let content = stripComment(raw)
             let indent = content.prefix { $0 == " " }.count
-            let text = String(content.dropFirst(indent)).trimmed
+            let rest = content.dropFirst(indent)
+            let text = rest.trimmed
             if text.isEmpty { continue }
-            if text.hasPrefix("\t") { throw Unsupported(reason: "tabs in the indentation (line \(offset + 1))") }
+            if rest.first == "\t" { throw Unsupported(reason: "tabs in the indentation (line \(offset + 1))") }
             if text == "---", lines.isEmpty { continue }
             if text == "---" || text == "..." || text.hasPrefix("%") {
                 throw Unsupported(reason: "several YAML documents or a directive (line \(offset + 1))")

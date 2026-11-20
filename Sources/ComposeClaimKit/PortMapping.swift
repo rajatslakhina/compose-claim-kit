@@ -46,7 +46,8 @@ public struct PortMapping: Sendable, Hashable {
             throw Invalid(text: text)
         }
         let hosts: ClosedRange<Int>?
-        if parts.count == 2, !parts[0].isEmpty {
+        // An empty host side, or `0`, lets Docker pick the host port.
+        if parts.count == 2, !parts[0].isEmpty, parts[0] != "0" {
             guard let parsed = range(parts[0]) else { throw Invalid(text: text) }
             hosts = parsed
         } else {

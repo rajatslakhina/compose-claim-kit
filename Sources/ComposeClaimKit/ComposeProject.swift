@@ -9,7 +9,7 @@ public struct ComposeService: Sendable, Hashable {
 
     public struct Variable: Sendable, Hashable {
         public let name: String
-        /// `nil` for `- NAME` or `NAME:` with no value: compose takes it from the shell.
+        /// `nil` for `- NAME` or `NAME:` with no value that neither the shell nor `.env` sets.
         public let value: String?
     }
 
@@ -34,9 +34,10 @@ public struct ComposeService: Sendable, Hashable {
         self.name = name
     }
 
-    /// The ports the container itself listens on, as far as the file says.
+    /// The ports the container itself listens on, as far as the file says, plus the port its image is known to
+    /// listen on (an official image's `EXPOSE`).
     public var containerPorts: Set<Int> {
-        Set(ports.map(\.target) + exposed)
+        Set(ports.map(\.target) + exposed + ImagePorts.ports(image))
     }
 
     func answers(to host: String) -> Bool {
@@ -183,16 +184,20 @@ struct ServiceReader {
         return .map(entries)
     }
 
+    /// `NAME: value` or `- NAME=value`; a name with no value takes the shell's (or `.env`'s) value, if any.
     func environment(_ node: ComposeNode?) throws(Failure) -> [ComposeService.Variable] {
+        let pairs: [(String, String?)]
         if let entries = node?.entries {
-            return try entries.map { entry throws(Failure) in
-                ComposeService.Variable(name: entry.key, value: try text(entry.value))
+            pairs = try entries.map { entry throws(Failure) in (entry.key, try text(entry.value)) }
+        } else {
+            pairs = try list(node).map { item in
+                guard let equals = item.firstIndex(of: "=") else { return (item, nil) }
+                return (String(item[..<equals]), String(item[item.index(after: equals)...]))
             }
         }
-        return try list(node).map { item in
-            guard let equals = item.firstIndex(of: "=") else { return ComposeService.Variable(name: item, value: nil) }
-            return ComposeService.Variable(name: String(item[..<equals]),
-                                           value: String(item[item.index(after: equals)...]))
+        return pairs.map { name, value in
+            let inherited = variables.unread.contains(name) ? nil : variables.value(name, dotEnvFirst: false)
+            return ComposeService.Variable(name: name, value: value ?? inherited)
         }
     }
 
