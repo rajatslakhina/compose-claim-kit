@@ -94,8 +94,9 @@ struct ProjectTests {
     }
 
     @Test func looksLikeCompose() {
-        #expect(ComposeProject.looksLikeCompose(["services:", "  web:"]))
-        #expect(ComposeProject.looksLikeCompose(["services: # the stack", "  web:"]))
+        #expect(ComposeProject.looksLikeCompose(["services:", "  web:", "    image: x"]))
+        #expect(ComposeProject.looksLikeCompose(["services: # the stack", "  web:", "    build: ."]))
+        #expect(!ComposeProject.looksLikeCompose(["services:", "  web:", "image: x"]))
         #expect(!ComposeProject.looksLikeCompose(["on: push", "jobs:", "  t:", "    services:"]))
         #expect(!ComposeProject.looksLikeCompose(["apiVersion: v1", "kind: Service", "services:"]))
         #expect(!ComposeProject.looksLikeCompose(["web:", "  image: x"]))

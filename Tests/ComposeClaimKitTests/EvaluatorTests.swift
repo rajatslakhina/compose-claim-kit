@@ -89,7 +89,7 @@ struct EvaluatorTests {
 
     @Test func lines() {
         let undefined = judge(.line(.undefinedDependency("cache"), service: "app"), stackScene)
-        #expect(undefined.outcome == .wrong(nil) && undefined.actual?.contains("undefined service") == true)
+        #expect(undefined.severity == .unchecked && undefined.actual?.contains("undefined service") == true)
         let healthy = judge(.line(.healthyWithoutHealthcheck("db"), service: "app"), stackScene)
         #expect(healthy.outcome == .caveat(.imageMayHaveHealthcheck))
         #expect(judge(.line(.healthyWithoutHealthcheck("db"), service: "app"), stackScene, policy: .lenient).outcome

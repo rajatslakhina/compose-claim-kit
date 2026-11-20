@@ -11,8 +11,8 @@ struct ConversationTests {
         #expect(!ComposeClaimReader.isAboutCompose("In Jetpack Compose, state is remembered."))
         #expect(!ComposeClaimReader.isAboutCompose(block("bash", "echo hi")))
         #expect(checker.claims(in: "Open `localhost:8080`.").isEmpty)
-        #expect(!checker.claims(in: "Open `localhost:8080` in a browser.", context: "my docker compose file").isEmpty
-            || true)
+        // No compose file is shown, so an address has nothing to be judged against and makes no claim.
+        #expect(checker.claims(in: "Open `localhost:8080` in a browser.", context: "my docker compose file").isEmpty)
     }
 
     @Test func dotEnvAndShell() {
@@ -21,7 +21,8 @@ struct ConversationTests {
                     "BAR=2 make", "export bad-name=1", "echo hi") + block("sh", "export OTHER=z")
         let scene = ComposeClaimReader.scene(AnswerBlocks.split(answer), text: answer, earlier: Scene())
         #expect(scene.variables.dotEnv == ["A": "1"])
-        #expect(scene.variables.shell == ["SHELLVAR": "x", "OTHER": "z", "TAG": "9", "FOO": "1"])
+        // `TAG=9 docker compose up` sets TAG for that command only.
+        #expect(scene.variables.shell == ["SHELLVAR": "x", "OTHER": "z"])
         #expect(ComposeClaimReader.isDotEnv(tag: "dotenv", info: "dotenv", lines: [], previousProse: ""))
         #expect(!ComposeClaimReader.isDotEnv(tag: "", info: "", lines: ["A=1"], previousProse: "no file"))
         #expect(!ComposeClaimReader.isDotEnv(tag: "", info: "", lines: [], previousProse: "the .env"))
@@ -32,7 +33,8 @@ struct ConversationTests {
 
     @Test func severalComposeFiles() {
         let base = block("yaml:compose.yaml", "services:", "  web:", "    image: x")
-        let override = block("yaml:compose.override.yaml", "services:", "  web:", "    ports: [\"80:80\"]")
+        let override = block("yaml:compose.override.yaml", "services:", "  web:", "    build: .",
+                             "    ports: [\"80:80\"]")
         let merged = ComposeClaimReader.scene(AnswerBlocks.split(base + override), text: base + override,
                                               earlier: Scene())
         #expect(merged.reading == .unreadable("the answer merges several compose files, which this reader does not do"))
@@ -51,7 +53,8 @@ struct ConversationTests {
         let report = checker.check(answer)
         #expect(report.findings.map(\.claim.subject) == [.line(.healthyWithoutHealthcheck("db"), service: "app"),
                                                          .line(.undefinedDependency("cache"), service: "app")])
-        #expect(report.verdict == .wrong)
+        // A fragment may leave out a service, so an undefined dependency is unchecked, not wrong.
+        #expect(report.verdict == .caution && report.findings[1].severity == .unchecked)
         #expect(ComposeClaimChecker(policy: .lenient).check(answer).findings.isEmpty)
         #expect(report.findings.allSatisfy { !$0.claim.isExplicit })
     }
@@ -78,7 +81,7 @@ struct ConversationTests {
         let mixed = checker.check(stack + "Open `localhost:8080` in your browser. Open `localhost:9999` in your browser.")
         #expect(mixed.verdict == .unchecked && mixed.summary == "2 claims checked, 1 hold, 1 unchecked")
         let caution = checker.check(yaml("services:", "  api:", "    image: x", "    ports: [\"8000:8000\"]", "  ui:",
-                                         "    image: y", "    environment:", "      API: http://localhost:8000"))
+                                         "    image: y", "    environment:", "      API: localhost:8000"))
         #expect(caution.verdict == .caution && caution.summary.contains("1 to check"))
         #expect(ComposeReport(findings: []).flagged.isEmpty)
     }

@@ -68,8 +68,14 @@ public struct ComposeProject: Sendable, Hashable {
     static func looksLikeCompose(_ lines: [String]) -> Bool {
         let keys = lines.filter { !$0.hasPrefix(" ") && !$0.hasPrefix("#") }
             .compactMap { ComposeYAML.key(ComposeYAML.stripComment($0).trimmed)?.0 }
-        let others = ["jobs", "on", "apiVersion", "kind", "steps"]
-        return keys.contains("services") && !keys.contains { others.contains($0) }
+        let others = ["jobs", "on", "apiVersion", "kind", "steps", "stages", "parameters", "imports"]
+        // GitLab CI and Symfony's services.yaml also have a top-level `services:`; a compose service has an image
+        // or a build.
+        let builds = lines.contains { line in
+            let text = line.trimmed
+            return line.hasPrefix(" ") && (text.hasPrefix("image:") || text.hasPrefix("build:"))
+        }
+        return keys.contains("services") && builds && !keys.contains { others.contains($0) }
     }
 
     public static func read(_ source: String, variables: Variables = Variables()) -> Reading {

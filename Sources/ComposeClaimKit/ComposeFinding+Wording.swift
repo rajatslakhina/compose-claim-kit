@@ -103,8 +103,7 @@ extension ComposeFinding {
     func lineExplanation(_ line: ComposeClaim.Line, _ service: String) -> String {
         switch line {
         case let .undefinedDependency(name):
-            "`\(service)` depends on `\(name)`, which the file does not define, so `docker compose` refuses the "
-                + "file with: \(detail)."
+            "`\(service)` depends on `\(name)`, which was not checked: \(detail)."
 
         case let .healthyWithoutHealthcheck(name):
             "`\(service)` waits for `\(name)` to be healthy, but `\(name)` has no `healthcheck:`; unless its image "

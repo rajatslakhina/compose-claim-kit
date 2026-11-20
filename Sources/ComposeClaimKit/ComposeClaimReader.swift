@@ -93,23 +93,16 @@ public struct ComposeClaimReader: Sendable {
         }
     }
 
-    /// `export NAME=value` and `NAME=value docker compose ...` lines of a shell block.
+    /// `export NAME=value` lines of a shell block. A `NAME=value docker compose up` prefix sets the variable for
+    /// that one command only, so it is not carried into the conversation.
     static func exports(_ lines: [String]) -> [String: String] {
         var values: [String: String] = [:]
         for raw in lines {
             var line = raw.trimmed
             if line.hasPrefix("$ ") { line = String(line.dropFirst(2)) }
             let words = line.split(separator: " ").map(String.init)
-            let assignments: ArraySlice<String>
-            if words.first == "export" {
-                assignments = words.dropFirst()
-            } else if let command = words.firstIndex(where: { !$0.contains("=") }),
-                      words[command...].starts(with: ["docker", "compose"]) || words[command] == "docker-compose" {
-                assignments = words[..<command]
-            } else {
-                continue
-            }
-            for assignment in assignments {
+            guard words.first == "export" else { continue }
+            for assignment in words.dropFirst() {
                 guard let equals = assignment.firstIndex(of: "="), Names.isName(String(assignment[..<equals]))
                 else { continue }
                 let value = String(assignment[assignment.index(after: equals)...])

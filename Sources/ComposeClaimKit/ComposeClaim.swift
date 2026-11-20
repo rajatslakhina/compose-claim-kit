@@ -19,16 +19,24 @@ public struct ComposeClaim: Sendable, Hashable {
         public let port: Int
         /// The environment variable the address was found in, for an address the compose file sets.
         public let variable: String?
+        /// The URL scheme it was written with (`http`, `postgres`), if any.
+        public let scheme: String?
 
-        public init(vantage: ComposeVantage, host: String, port: Int, variable: String? = nil) {
+        public init(vantage: ComposeVantage, host: String, port: Int, variable: String? = nil, scheme: String? = nil) {
             self.vantage = vantage
             self.host = host
             self.port = port
             self.variable = variable
+            self.scheme = scheme
+        }
+
+        /// A browser reads `http(s)` and `ws(s)` URLs; databases and queues are reached by the process itself.
+        var isWeb: Bool {
+            ["http", "https", "ws", "wss"].contains(scheme ?? "")
         }
 
         var isLoopback: Bool {
-            ["localhost", "127.0.0.1", "0.0.0.0", "[::1]", "::1"].contains(host)
+            ["localhost", "127.0.0.1", "[::1]", "::1"].contains(host)
         }
     }
 

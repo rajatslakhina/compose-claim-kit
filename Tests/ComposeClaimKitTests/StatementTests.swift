@@ -9,7 +9,8 @@ struct StatementTests {
         ("`depends_on` makes sure the database is ready before the app starts.", Statement.dependsOnWaitsForReady),
         ("depends on waits until Postgres is accepting connections.", .dependsOnWaitsForReady),
         ("`depends_on` does not wait for the database to be ready.", .dependsOnOrdersStart),
-        ("`depends_on` only waits for the container to start, not until it is ready.", .dependsOnOrdersStart),
+        ("`depends_on` does not wait until Postgres is ready.", .dependsOnOrdersStart),
+        ("Plain `depends_on` only waits until the container is up and running.", .dependsOnOrdersStart),
         ("Variables in `.env` are available inside the container.", .dotEnvReachesContainer),
         ("The `.env` values are not passed to the containers.", .dotEnvForSubstitution),
         ("`.env` is only used for substitution in the compose file.", .dotEnvForSubstitution),
@@ -23,7 +24,7 @@ struct StatementTests {
         ("`environment` takes precedence over `env_file`.", .environmentBeatsEnvFile),
         ("A key in `env_file` is replaced by the one in `environment:`.", .environmentBeatsEnvFile),
         ("With `expose`, the port is published to the host.", .exposePublishes),
-        ("`expose` does not make the port reachable from your browser.", .exposeStaysInternal),
+        ("Ports listed under `expose` are not published to the host.", .exposeStaysInternal),
         ("`expose` only opens it to other services on the same network.", .exposeStaysInternal),
         ("Publishing `5432:5432` is only reachable from localhost.", .publishesOnLocalhostOnly),
         ("With `ports:` the database listens on all interfaces.", .publishesOnAllInterfaces),
@@ -31,7 +32,8 @@ struct StatementTests {
         ("The format is container:host.", .containerPortFirst),
         ("Inside a container, `localhost` refers to the container itself.", .localhostIsOwnContainer),
         ("Containers talk to each other on `localhost`.", .localhostReachesServices),
-        ("You cannot reach other services on localhost.", .localhostIsOwnContainer),
+        ("Containers cannot reach other services on localhost.", .localhostIsOwnContainer),
+        ("Docker Compose passes every variable in `.env` to the containers.", .dotEnvReachesContainer),
         ("Of the shell and `.env`, `.env` wins over the shell.", .dotEnvBeatsShell),
         ("The shell overrides `.env`, and `.env` overrides nothing else.", .shellBeatsDotEnv),
         ("It overrides defaults, and `.env` beats the shell.", .dotEnvBeatsShell)
@@ -60,16 +62,22 @@ struct StatementTests {
         "`localhost` with `network_mode: host` reaches other services.",
         "`localhost` is fast.",
         "People think `.env` takes precedence over the shell.",
-        "Kubernetes `ports` work differently."
+        "Kubernetes `ports` work differently.",
+        "`depends_on` only waits for the container to start, not until it is ready.",
+        "`expose` does not make the port reachable from your browser.",
+        "You cannot reach other services on localhost.",
+        "Plain `depends_on` only waits until the container is up, which is not the same as ready."
     ])
     func ignores(sentence: String) {
         #expect(StatementReader.statements(in: sentence).isEmpty, "\(sentence)")
     }
 
     @Test func negation() {
-        #expect(StatementReader.negated(" x waits ", before: ["nope"]) == nil)
-        #expect(StatementReader.negated(" it won't wait ", before: ["wait"]) == true)
-        #expect(StatementReader.negated(" it shouldn't wait ", before: ["wait"]) == true)
+        #expect(StatementReader.polarity(" x waits ", topics: ["x"], verbs: ["nope"], negations: 0) == nil)
+        #expect(StatementReader.polarity(" x waits ", topics: ["y"], verbs: ["waits"], negations: 0) == nil)
+        #expect(StatementReader.polarity(" it won't wait ", topics: ["it"], verbs: ["wait"], negations: 1) == true)
+        #expect(StatementReader.polarity(" it shouldn't wait ", topics: ["it"], verbs: ["wait"], negations: 2) == nil)
+        #expect(StatementReader.negationCount(" not it can't never ") == 3)
         #expect(StatementReader.ranges(of: "a", in: "banana").count == 3)
         #expect(StatementReader.winner(" .env shell ", first: [".env"], second: ["shell"],
                                        firstWins: .dotEnvBeatsShell, secondWins: .shellBeatsDotEnv).isEmpty)

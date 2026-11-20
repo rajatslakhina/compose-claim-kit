@@ -128,8 +128,11 @@ struct ComposeEvaluator {
         let onHost = project.services.contains { service in
             service.ports.contains { $0.isOnLoopback && $0.published?.contains(address.port) == true }
         }
-        if address.variable != nil, onHost {
-            return ComposeFinding(claim: claim, outcome: .caveat(.readOnHostOnly), actual: actual)
+        // A web URL in a service's environment is often handed to a browser (`CORS_ORIGIN`, `VITE_API_URL`); a
+        // database or queue URL is used by the process itself.
+        if address.variable != nil, onHost, address.scheme == nil || address.isWeb {
+            return address.isWeb ? ComposeFinding(claim: claim, outcome: .exact)
+                : ComposeFinding(claim: claim, outcome: .caveat(.readOnHostOnly), actual: actual)
         }
         return ComposeFinding(claim: claim, outcome: .wrong(.localhostIsAnotherContainer), actual: actual)
     }
@@ -148,11 +151,17 @@ struct ComposeEvaluator {
         return ComposeFinding(claim: claim, outcome: .unchecked("the compose file has no such port mapping"))
     }
 
+    /// An unchecked finding that also keeps its reason as the detail the wording uses.
+    static func unchecked(_ claim: ComposeClaim, _ reason: String) -> ComposeFinding {
+        ComposeFinding(claim: claim, outcome: .unchecked(reason), actual: reason)
+    }
+
     func judgeLine(_ line: ComposeClaim.Line, _ service: String, _ claim: ComposeClaim) -> ComposeFinding {
         switch line {
         case let .undefinedDependency(name):
-            ComposeFinding(claim: claim, outcome: .wrong(nil),
-                           actual: "service \"\(service)\" depends on undefined service \"\(name)\"")
+            // Answers often show part of a file, so a service missing from what is shown is not proof.
+            Self.unchecked(claim, "the file shown does not define it; if the whole file does not either, compose "
+                + "refuses it: service \"\(service)\" depends on undefined service \"\(name)\"")
         case let .healthyWithoutHealthcheck(name):
             ComposeFinding(claim: claim, outcome: .caveat(.imageMayHaveHealthcheck),
                            actual: "dependency failed to start: container <project>-\(name)-1 has no healthcheck "

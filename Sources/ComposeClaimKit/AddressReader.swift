@@ -3,6 +3,7 @@ enum AddressReader {
     struct Found: Hashable {
         let host: String
         let port: Int
+        var scheme: String?
     }
 
     /// Every address in the text whose host is a loopback name or a name the project answers to.
@@ -29,7 +30,11 @@ enum AddressReader {
         if let equals = text.firstIndex(of: "="), text[..<equals].allSatisfy(Names.isNameCharacter) {
             text = String(text[text.index(after: equals)...])
         }
-        if let scheme = text.range(of: "://") { text = String(text[scheme.upperBound...]) }
+        var scheme: String?
+        if let separator = text.range(of: "://") {
+            scheme = String(text[..<separator.lowerBound]).lowercased()
+            text = String(text[separator.upperBound...])
+        }
         if let slash = text.firstIndex(of: "/") { text = String(text[..<slash]) }
         if let at = text.lastIndex(of: "@") { text = String(text[text.index(after: at)...]) }
         guard let colon = text.lastIndex(of: ":") else { return nil }
@@ -37,7 +42,7 @@ enum AddressReader {
         guard let port = Int(text[text.index(after: colon)...]), (1...65535).contains(port), !host.isEmpty,
               host == "[::1]" || (host.allSatisfy({ $0.isLetter || $0.isNumber || ".-_".contains($0) })
                   && (host.contains(where: \.isLetter) || host.contains("."))) else { return nil }
-        return Found(host: host, port: port)
+        return Found(host: host, port: port, scheme: scheme)
     }
 
     /// The claims a prose sentence makes about addresses.
@@ -62,7 +67,7 @@ enum AddressReader {
             if loopback {
                 if named.count == 1, fromContainer {
                     vantage = .service(named[0].name)
-                } else if fromHost, !fromContainer {
+                } else if fromHost {
                     vantage = .host
                 } else {
                     continue
@@ -87,7 +92,8 @@ enum AddressReader {
                 guard let value = variable.value else { continue }
                 for address in addresses(in: value, project: project) {
                     let claim = ComposeClaim.Address(vantage: .service(service.name), host: address.host,
-                                                     port: address.port, variable: variable.name)
+                                                     port: address.port, variable: variable.name,
+                                                     scheme: address.scheme)
                     let sentence = "\(service.name): \(variable.name)=\(value)"
                     claims.append(ComposeClaim(subject: .address(claim), sentence: sentence, scene: scene))
                 }

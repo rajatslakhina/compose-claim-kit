@@ -60,7 +60,15 @@ struct ProbeTests {
         "The `env_file` values are overridden by `environment:` when both define a key.",
         "With `TAG` unset, `${TAG:-latest}` becomes `latest`, and with `TAG=1.2` it becomes `1.2`.",
         "In `HOST:CONTAINER` the host port is first.",
-        "Open `http://localhost:8000/docs` in your browser for the API docs."
+        "Open `http://localhost:8000/docs` in your browser for the API docs.",
+        "Variables set in `.env` are not passed to the container.",
+        "`expose` makes the port available to other containers, not to the host.",
+        "`depends_on` only orders startup; use a wait script to wait for the database to be ready.",
+        "To connect to another service, use its name instead of `localhost`.",
+        "`.env` overrides the default in `${TAG:-latest}`; your shell overrides both.",
+        "`3000:3000` listens on all interfaces, not only on localhost.",
+        "The `web` service is available at `http://localhost:3000`.",
+        "Vite is listening on `0.0.0.0:3000` inside the `web` container."
     ])
     func correct(answer: String) {
         let report = checker.check(Self.project + answer)
@@ -87,7 +95,8 @@ struct ProbeTests {
         if let slip {
             #expect(report.flagged.map(\.slip) == [slip], "\(answer): \(report.corrections)")
         } else {
-            #expect(report.verdict != .wrong || !report.flagged.isEmpty)
+            // A mistake the readers cannot pin down stays unflagged rather than being called wrong.
+            #expect(report.flagged.isEmpty, "\(answer): \(report.corrections)")
         }
     }
 
@@ -111,6 +120,29 @@ struct ProbeTests {
     func otherToolsInAComposeConversation(answer: String) {
         let report = checker.check(Self.project + answer, context: "How does this compare with my docker compose file?")
         #expect(report.flagged.isEmpty, "\(answer): \(report.corrections)")
+    }
+
+    @Test func environmentURLs() {
+        let answer = yaml("services:", "  web:", "    build: .", "    ports: [\"8000:80\"]", "  api:", "    build: ./api",
+                          "    ports: [\"9000:8000\"]", "    environment:", "      CORS_ORIGIN: http://localhost:8000",
+                          "      DATABASE_URL: postgres://localhost:5432/app", "  db:", "    image: postgres:16",
+                          "    ports: [\"5432:5432\"]")
+        let report = checker.check(answer + "The `web` service is available at `http://localhost:8000`.")
+        #expect(report.flagged.map(\.slip) == [.localhostIsAnotherContainer], "\(report.corrections)")
+        #expect(report.flagged.first?.claim.sentence.contains("DATABASE_URL") == true)
+    }
+
+    @Test func oneCommandPrefix() {
+        let answer = yaml("services:", "  web:", "    image: \"nginx:${TAG}\"") + "In `.env`:\n\n"
+            + block("env", "TAG=1.27") + "`${TAG}` becomes `1.27`.\n\n" + block("bash", "TAG=1.26 docker compose up")
+        #expect(checker.check(answer).verdict == .verified)
+    }
+
+    @Test func gitLabAndSymfony() {
+        let gitlab = yaml("stages: [test]", "services:", "  - postgres:16", "test:", "  script: [\"pytest\"]")
+        let symfony = yaml("services:", "  _defaults:", "    autowire: true", "  App\\:", "    resource: '../src/'")
+        #expect(checker.check(gitlab + "The job connects to `postgres:5432`.").verdict == .noClaims)
+        #expect(checker.check(symfony + "Services are autowired.").verdict == .noClaims)
     }
 
     @Test func laterTurnOfAnotherDomain() async {

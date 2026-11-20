@@ -65,8 +65,8 @@ struct WordingTests {
 
     @Test func lines() {
         #expect(explain(.line(.undefinedDependency("cache"), service: "app")) == "`app` depends on `cache`, which "
-            + "the file does not define, so `docker compose` refuses the file with: service \"app\" depends on "
-            + "undefined service \"cache\".")
+            + "was not checked: the file shown does not define it; if the whole file does not either, compose "
+            + "refuses it: service \"app\" depends on undefined service \"cache\".")
         #expect(explain(.line(.healthyWithoutHealthcheck("db"), service: "app")).hasSuffix(
             "stops with: dependency failed to start: container <project>-db-1 has no healthcheck configured."))
     }

@@ -43,11 +43,19 @@ struct YAMLTests {
         #expect(try ComposeYAML.parse("\n# only a comment\n") == .null)
         #expect(try ComposeYAML.parse("key:") == .map([ComposeEntry(key: "key", value: .null)]))
         #expect(try ComposeYAML.parse("- a\n- b") == .list([.scalar("a"), .scalar("b")]))
+        let blocks = try ComposeYAML.parse("a: |\n  one\n  two\nb: >-\n  one\n  two\nc: {}\nd: {x: 1, 'y': \"2\", z:}")
+        #expect(blocks["a"]?.text == "one\ntwo")
+        #expect(blocks["b"]?.text == "one two")
+        #expect(blocks["c"] == .map([]))
+        #expect(blocks["d"] == .map([ComposeEntry(key: "x", value: .scalar("1")), ComposeEntry(key: "y", value: .scalar("2")),
+                                     ComposeEntry(key: "z", value: .null)]))
     }
 
     @Test(arguments: [
-        ("a: &x 1", "an anchor"), ("a: *x", "an alias"), ("a: !tag x", "a tag"), ("a: |\n  text", "a block scalar"),
-        ("a: >\n  text", "a block scalar"), ("a: {b: 1}", "a flow mapping"), ("a: [1,\n  2]", "flow sequence"),
+        ("a: &x 1", "an anchor"), ("a: *x", "an alias"), ("a: !tag x", "a tag"), ("- |\n  text", "a block scalar"),
+        ("- >\n  text", "a block scalar"), ("a: {b: {c: 1}}", "nested flow"), ("a: [1,\n  2]", "flow sequence"),
+        ("a: {b: 1,\n  c: 2}", "flow mapping over several lines"), ("a: {x}", "flow mapping entry"),
+        ("a: |x\n  text", "block scalar header"),
         ("a: [[1]]", "nested flow"), ("a: \"open", "quoted value"), ("a: \"x\" y", "quoted value"),
         ("a: b: c", "mapping inside a plain value"), ("a: plain\n  continued", "continued"),
         ("a:\n\t- b", "tabs"), ("a: 1\n---\nb: 2", "several YAML documents"), ("%YAML 1.2\na: 1", "directive"),

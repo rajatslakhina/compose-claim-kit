@@ -123,6 +123,9 @@ enum ComposeYAML {
                 index += 1
                 if rest.isEmpty {
                     entries.append(ComposeEntry(key: key, value: try nested(after: indent, sameIndentSequence: true)))
+                } else if let header = rest.first, header == "|" || header == ">" {
+                    entries.append(ComposeEntry(key: key, value: try blockScalar(rest, line: line.number,
+                                                                                 deeperThan: indent)))
                 } else {
                     entries.append(ComposeEntry(key: key, value: try ComposeYAML.value(rest, line: line.number)))
                     try noContinuation(deeperThan: indent)
@@ -138,6 +141,21 @@ enum ComposeYAML {
             if next.indent > indent { return try block(indent: next.indent) }
             if sameIndentSequence, next.indent == indent, isItem(next.text) { return try sequence(indent: indent) }
             return .null
+        }
+
+        /// `|` keeps the lines, `>` folds them into one; the text is kept only roughly (comment-like lines and blank
+        /// lines are already gone), which is enough for values nothing here checks.
+        mutating func blockScalar(_ header: String, line: Int, deeperThan indent: Int) throws(Unsupported)
+            -> ComposeNode {
+            guard header.dropFirst().allSatisfy({ "+-0123456789".contains($0) }) else {
+                throw Unsupported(reason: "a block scalar header this reader does not follow (line \(line))")
+            }
+            var text: [String] = []
+            while index < lines.count, lines[index].indent > indent {
+                text.append(lines[index].text)
+                index += 1
+            }
+            return .scalar(text.joined(separator: header.hasPrefix("|") ? "\n" : " "))
         }
 
         func noContinuation(deeperThan indent: Int) throws(Unsupported) {
@@ -197,12 +215,12 @@ enum ComposeYAML {
     /// A value written after `key: ` or `- `.
     static func value(_ text: String, line: Int) throws(Unsupported) -> ComposeNode {
         let unsupported: [(Character, String)] = [("&", "an anchor"), ("*", "an alias"), ("!", "a tag"),
-                                                  ("|", "a block scalar"), (">", "a block scalar"),
-                                                  ("{", "a flow mapping")]
+                                                  ("|", "a block scalar"), (">", "a block scalar")]
         if let first = text.first, let (_, what) = unsupported.first(where: { $0.0 == first }) {
             throw Unsupported(reason: "\(what) (line \(line))")
         }
         if text.hasPrefix("[") { return try flow(text, line: line) }
+        if text.hasPrefix("{") { return try flowMap(text, line: line) }
         if text.first == "\"" || text.first == "'" {
             guard let (value, end) = quoted(text), end == text.endIndex else {
                 throw Unsupported(reason: "a quoted value this reader does not follow (line \(line))")
@@ -214,12 +232,37 @@ enum ComposeYAML {
         return .scalar(text)
     }
 
+    /// `{}` or `{a: 1, b: "x"}`: a flow mapping of scalars on one line.
+    static func flowMap(_ text: String, line: Int) throws(Unsupported) -> ComposeNode {
+        guard text.hasSuffix("}"), text.count >= 2 else {
+            throw Unsupported(reason: "a flow mapping over several lines (line \(line))")
+        }
+        var entries: [ComposeEntry] = []
+        for item in try items(text.dropFirst().dropLast(), line: line) where !item.isEmpty {
+            guard let (key, rest) = ComposeYAML.key(item) else {
+                throw Unsupported(reason: "a flow mapping entry this reader does not follow (line \(line))")
+            }
+            entries.append(ComposeEntry(key: key, value: rest.isEmpty ? .null : try value(rest, line: line)))
+        }
+        return .map(entries)
+    }
+
     /// `[80, "443", 'x']`: a flow sequence of scalars on one line.
     static func flow(_ text: String, line: Int) throws(Unsupported) -> ComposeNode {
         guard text.hasSuffix("]"), text.count >= 2 else {
             throw Unsupported(reason: "a flow sequence over several lines (line \(line))")
         }
-        let inside = text.dropFirst().dropLast()
+        let trimmed = try items(text.dropFirst().dropLast(), line: line)
+        if trimmed == [""] { return .list([]) }
+        var nodes: [ComposeNode] = []
+        for item in trimmed where !item.isEmpty {
+            nodes.append(try value(item, line: line))
+        }
+        return .list(nodes)
+    }
+
+    /// The comma-separated items of a flow collection's inside, trimmed.
+    static func items(_ inside: Substring, line: Int) throws(Unsupported) -> [String] {
         var items: [String] = []
         var current = ""
         var quote: Character?
@@ -238,12 +281,6 @@ enum ComposeYAML {
             current.append(character)
         }
         items.append(current)
-        let trimmed = items.map(\.trimmed)
-        if trimmed == [""] { return .list([]) }
-        var nodes: [ComposeNode] = []
-        for item in trimmed where !item.isEmpty {
-            nodes.append(try value(item, line: line))
-        }
-        return .list(nodes)
+        return items.map(\.trimmed)
     }
 }
