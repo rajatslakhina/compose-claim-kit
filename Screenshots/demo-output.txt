@@ -1,0 +1,61 @@
+ComposeClaimKit demo: what an answer says about a compose project, checked with compose's own rules
+
+[1] A correct answer about ports, service names and depends_on
+    answer: verified (3 claims checked, 3 hold)
+      ok `localhost:8080` works from the host (`web` publishes `8080:80`), as the answer says.
+      ok `db:5432` works from inside `app`, as the answer says.
+      ok `localhost:5433` works from the host (`db` publishes `5433:5432`), as the answer says.
+
+[2] Host and container sides of a port mapping
+    answer: wrong (2 claims checked, 0 hold, 2 wrong)
+      XX The mapping is the other way round: `8080:80` maps host port 8080 to container port 80 (compose writes `HOST:CONTAINER`).
+      XX `localhost:80` does not work from the host: `web` publishes container port 80 as `8080:80`, and the host reaches a container only through its published port.
+
+[3] The published port used between containers (one mistake, one finding)
+    answer: wrong (1 claim checked, 0 hold, 1 wrong)
+      XX `db:5433` does not work from inside `app`: containers reach each other on the container port, so use `db:5432` (the container port of `5433:5432`).
+    compose file alone: wrong (1 claim checked, 0 hold, 1 wrong)
+      XX `DATABASE_URL` in `app` (`db:5433`) does not work from inside `app`: containers reach each other on the container port, so use `db:5432` (the container port of `5433:5432`).
+
+[4] localhost inside a container (a URL a browser reads stays quiet)
+    answer: wrong (1 claim checked, 0 hold, 1 wrong)
+      XX `DATABASE_URL` in `api` (`localhost:5432`) does not work from inside `api`: inside a container `localhost` is that container itself, so use `db:5432`.
+
+[5] depends_on and readiness
+    answer: wrong (1 claim checked, 0 hold, 1 wrong)
+      XX `depends_on` waits only for the dependency's container to start, not for it to be ready; use `condition: service_healthy` with a `healthcheck:` for that.
+    rewrite: caution (1 claim checked, 0 hold, 1 to check)
+      !! `app` waits for `db` to be healthy, but `db` has no `healthcheck:`; unless its image defines a HEALTHCHECK, `docker compose up` stops with: dependency failed to start: container <project>-db-1 has no healthcheck configured.
+
+[6] Variable substitution and .env
+    answer: wrong (3 claims checked, 2 hold, 1 wrong)
+      ok `nginx:${TAG:-latest}` gives `nginx:1.27`, as the answer says.
+      ok `${PORT:-8080}` gives `8080` when `PORT` is empty, as the answer says.
+      XX `${TAG-latest}` does not give `latest` when `TAG` is empty: it gives an empty string (without a colon, `-` uses the default only when the variable is unset, not empty).
+    follow-up: wrong (1 claim checked, 0 hold, 1 wrong)
+      XX Variables in `.env` are not set inside the containers: compose uses them for substitution in the compose file; pass them with `env_file:` or `environment:`.
+
+[7] Which value wins
+    answer: wrong (2 claims checked, 0 hold, 2 wrong)
+      XX `.env` does not win over the shell: a variable exported in the shell takes precedence over `.env`.
+      XX `env_file:` does not win over `environment:`: a variable set in both takes the `environment:` value.
+    rewrite: verified (3 claims checked, 3 hold)
+      ok The statement about the shell's environment and `.env` holds.
+      ok The statement about `environment:` and `env_file:` holds.
+      ok `${TAG}` gives `1.26`, as the answer says.
+
+[8] expose does not publish
+    answer: wrong (1 claim checked, 0 hold, 1 wrong)
+      XX `expose` does not make a port reachable from the host: it opens it to other containers; publish it under `ports:`.
+    rewrite: verified (1 claim checked, 1 hold)
+      ok The statement about `expose` holds.
+
+[9] Other tools' YAML and other domains make no claims
+    GitHub Actions: noClaims (no claims about a compose project)
+    bash: noClaims (no claims about a compose project)
+    Jetpack Compose: noClaims (no claims about a compose project)
+
+[10] A conversation: the same mistake stated again
+    turn 2: wrong (1 claim checked, 0 hold, 1 wrong, 1 repeated)
+      XX `localhost:5432` does not work from inside `app`: inside a container `localhost` is that container itself, so use `db:5432`. [repeated]
+    ledger: 2 reviews, 2 claims, 2 flagged, 1 repeated

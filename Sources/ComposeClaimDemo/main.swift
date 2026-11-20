@@ -35,7 +35,7 @@ let published = stack.replacingOccurrences(of: "@db:5432/app", with: "@db:5433/a
 show(checker.check(published + "Inside the network, the `app` service reaches Postgres at `db:5433`."))
 show(checker.check(published), label: "compose file alone")
 
-heading(4, "localhost inside a container")
+heading(4, "localhost inside a container (a URL a browser reads stays quiet)")
 let frontend = compose(
     "services:",
     "  api:",

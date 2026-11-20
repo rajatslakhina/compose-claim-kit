@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="470" viewBox="0 0 1200 470">
+<rect width="1200" height="470" rx="12" fill="#0b1120"/>
+<defs><marker id="a" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M0,0 L10,4 L0,8 z" fill="#64748b"/></marker></defs>
+<text x="600" y="34" fill="#e2e8f0" font-family="Helvetica, Arial, sans-serif" font-size="17" text-anchor="middle" font-weight="bold">ComposeClaimKit:&#160;what&#160;an&#160;answer&#160;says&#160;about&#160;a&#160;compose&#160;project,&#160;checked&#160;with&#160;compose's&#160;own&#160;rules</text>
+<rect x="30" y="60" width="260" height="140" rx="10" fill="#111827" stroke="#93c5fd" stroke-width="2"/>
+<text x="160.0" y="82" fill="#93c5fd" font-family="Helvetica, Arial, sans-serif" font-size="14" text-anchor="middle" font-weight="bold">Answer&#160;+&#160;question</text>
+<text x="42" y="104" fill="#cbd5e1" font-family="Menlo, Monaco, monospace" font-size="11" text-anchor="start" font-weight="normal">prose&#160;sentences</text>
+<text x="42" y="121" fill="#cbd5e1" font-family="Menlo, Monaco, monospace" font-size="11" text-anchor="start" font-weight="normal">```yaml&#160;compose&#160;file</text>
+<text x="42" y="138" fill="#cbd5e1" font-family="Menlo, Monaco, monospace" font-size="11" text-anchor="start" font-weight="normal">```env&#160;/&#160;.env&#160;blocks</text>
+<text x="42" y="155" fill="#cbd5e1" font-family="Menlo, Monaco, monospace" font-size="11" text-anchor="start" font-weight="normal">```bash&#160;export&#160;lines</text>
+<text x="42" y="172" fill="#cbd5e1" font-family="Menlo, Monaco, monospace" font-size="11" text-anchor="start" font-weight="normal">earlier&#160;turns&#160;(ledger)</text>
+<rect x="330" y="60" width="300" height="140" rx="10" fill="#111827" stroke="#a7f3d0" stroke-width="2"/>
+<text x="480.0" y="82" fill="#a7f3d0" font-family="Helvetica, Arial, sans-serif" font-size="14" text-anchor="middle" font-weight="bold">Compose's&#160;reading</text>
+<text x="342" y="104" fill="#cbd5e1" font-family="Menlo, Monaco, monospace" font-size="11" text-anchor="start" font-weight="normal">ComposeYAML&#160;(subset,&#160;refuses</text>
+<text x="342" y="121" fill="#cbd5e1" font-family="Menlo, Monaco, monospace" font-size="11" text-anchor="start" font-weight="normal">&#160;&#160;anchors,&#160;merges,&#160;tags)</text>
+<text x="342" y="138" fill="#cbd5e1" font-family="Menlo, Monaco, monospace" font-size="11" text-anchor="start" font-weight="normal">Interpolation&#160;(${V:-d}&#160;...)</text>
+<text x="342" y="155" fill="#cbd5e1" font-family="Menlo, Monaco, monospace" font-size="11" text-anchor="start" font-weight="normal">EnvFile&#160;(.env&#160;rules)</text>
+<text x="342" y="172" fill="#cbd5e1" font-family="Menlo, Monaco, monospace" font-size="11" text-anchor="start" font-weight="normal">PortMapping&#160;(short&#160;+&#160;long)</text>
+<rect x="670" y="60" width="500" height="140" rx="10" fill="#111827" stroke="#fcd34d" stroke-width="2"/>
+<text x="920.0" y="82" fill="#fcd34d" font-family="Helvetica, Arial, sans-serif" font-size="14" text-anchor="middle" font-weight="bold">Readers</text>
+<text x="682" y="104" fill="#cbd5e1" font-family="Menlo, Monaco, monospace" font-size="11" text-anchor="start" font-weight="normal">AddressReader&#160;&#160;&#160;localhost:8080,&#160;db:5432,&#160;URLs</text>
+<text x="682" y="121" fill="#cbd5e1" font-family="Menlo, Monaco, monospace" font-size="11" text-anchor="start" font-weight="normal">MappingReader&#160;&#160;&#160;host&#160;port&#160;A&#160;to&#160;container&#160;port&#160;B</text>
+<text x="682" y="138" fill="#cbd5e1" font-family="Menlo, Monaco, monospace" font-size="11" text-anchor="start" font-weight="normal">ResolveReader&#160;&#160;&#160;`${TAG:-x}`&#160;becomes&#160;`y`&#160;when&#160;...</text>
+<text x="682" y="155" fill="#cbd5e1" font-family="Menlo, Monaco, monospace" font-size="11" text-anchor="start" font-weight="normal">StatementReader&#160;depends_on,&#160;.env,&#160;env_file,&#160;expose,</text>
+<text x="682" y="172" fill="#cbd5e1" font-family="Menlo, Monaco, monospace" font-size="11" text-anchor="start" font-weight="normal">&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;bind&#160;address,&#160;HOST:CONTAINER,&#160;localhost</text>
+<rect x="30" y="250" width="400" height="170" rx="10" fill="#111827" stroke="#f9a8d4" stroke-width="2"/>
+<text x="230.0" y="272" fill="#f9a8d4" font-family="Helvetica, Arial, sans-serif" font-size="14" text-anchor="middle" font-weight="bold">ComposeEvaluator</text>
+<text x="42" y="294" fill="#cbd5e1" font-family="Menlo, Monaco, monospace" font-size="11" text-anchor="start" font-weight="normal">from&#160;the&#160;host:&#160;published&#160;ports&#160;only</text>
+<text x="42" y="311" fill="#cbd5e1" font-family="Menlo, Monaco, monospace" font-size="11" text-anchor="start" font-weight="normal">between&#160;containers:&#160;service:containerPort</text>
+<text x="42" y="328" fill="#cbd5e1" font-family="Menlo, Monaco, monospace" font-size="11" text-anchor="start" font-weight="normal">localhost&#160;in&#160;a&#160;container:&#160;that&#160;container</text>
+<text x="42" y="345" fill="#cbd5e1" font-family="Menlo, Monaco, monospace" font-size="11" text-anchor="start" font-weight="normal">substitution:&#160;exact,&#160;then&#160;5&#160;misreadings</text>
+<text x="42" y="362" fill="#cbd5e1" font-family="Menlo, Monaco, monospace" font-size="11" text-anchor="start" font-weight="normal">env&#160;URLs:&#160;http&#160;stays&#160;quiet,&#160;db&#160;schemes&#160;wrong</text>
+<text x="42" y="379" fill="#cbd5e1" font-family="Menlo, Monaco, monospace" font-size="11" text-anchor="start" font-weight="normal">fragments:&#160;undefined&#160;depends_on&#160;unchecked</text>
+<rect x="470" y="250" width="330" height="170" rx="10" fill="#111827" stroke="#c4b5fd" stroke-width="2"/>
+<text x="635.0" y="272" fill="#c4b5fd" font-family="Helvetica, Arial, sans-serif" font-size="14" text-anchor="middle" font-weight="bold">ComposeFinding</text>
+<text x="482" y="294" fill="#cbd5e1" font-family="Menlo, Monaco, monospace" font-size="11" text-anchor="start" font-weight="normal">exact&#160;/&#160;caveat&#160;/&#160;wrong(slip)&#160;/</text>
+<text x="482" y="311" fill="#cbd5e1" font-family="Menlo, Monaco, monospace" font-size="11" text-anchor="start" font-weight="normal">unchecked(reason)</text>
+<text x="482" y="328" fill="#cbd5e1" font-family="Menlo, Monaco, monospace" font-size="11" text-anchor="start" font-weight="normal">14&#160;slips,&#160;3&#160;caveats</text>
+<text x="482" y="345" fill="#cbd5e1" font-family="Menlo, Monaco, monospace" font-size="11" text-anchor="start" font-weight="normal">one&#160;mistake,&#160;one&#160;finding</text>
+<text x="482" y="362" fill="#cbd5e1" font-family="Menlo, Monaco, monospace" font-size="11" text-anchor="start" font-weight="normal">explanation:&#160;one&#160;sentence</text>
+<rect x="840" y="250" width="330" height="170" rx="10" fill="#111827" stroke="#fda4af" stroke-width="2"/>
+<text x="1005.0" y="272" fill="#fda4af" font-family="Helvetica, Arial, sans-serif" font-size="14" text-anchor="middle" font-weight="bold">ComposeReport&#160;/&#160;ComposeLedger</text>
+<text x="852" y="294" fill="#cbd5e1" font-family="Menlo, Monaco, monospace" font-size="11" text-anchor="start" font-weight="normal">verdict:&#160;noClaims&#160;...&#160;wrong</text>
+<text x="852" y="311" fill="#cbd5e1" font-family="Menlo, Monaco, monospace" font-size="11" text-anchor="start" font-weight="normal">note:&#160;"Compose&#160;check:&#160;..."</text>
+<text x="852" y="328" fill="#cbd5e1" font-family="Menlo, Monaco, monospace" font-size="11" text-anchor="start" font-weight="normal">feedback&#160;for&#160;a&#160;retry</text>
+<text x="852" y="345" fill="#cbd5e1" font-family="Menlo, Monaco, monospace" font-size="11" text-anchor="start" font-weight="normal">ledger&#160;(actor):&#160;last&#160;compose&#160;file,</text>
+<text x="852" y="362" fill="#cbd5e1" font-family="Menlo, Monaco, monospace" font-size="11" text-anchor="start" font-weight="normal">.env,&#160;exports,&#160;repeats</text>
+<line x1="290" y1="130" x2="330" y2="130" stroke="#64748b" stroke-width="2" marker-end="url(#a)"/>
+<line x1="630" y1="130" x2="670" y2="130" stroke="#64748b" stroke-width="2" marker-end="url(#a)"/>
+<line x1="920" y1="200" x2="230" y2="250" stroke="#64748b" stroke-width="2" marker-end="url(#a)"/>
+<line x1="430" y1="335" x2="470" y2="335" stroke="#64748b" stroke-width="2" marker-end="url(#a)"/>
+<line x1="800" y1="335" x2="840" y2="335" stroke="#64748b" stroke-width="2" marker-end="url(#a)"/>
+<text x="600" y="452" fill="#94a3b8" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="middle" font-weight="normal">Oracle:&#160;docker&#160;compose&#160;config&#160;--format&#160;json&#160;(73&#160;parity&#160;cases)&#160;+&#160;a&#160;running&#160;two-container&#160;project&#160;for&#160;reachability</text>
+</svg>
