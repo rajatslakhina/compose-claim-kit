@@ -88,6 +88,9 @@ public struct ComposeProject: Sendable, Hashable {
         guard let entries = root["services"]?.entries else {
             return .unreadable("the compose file has no `services:` mapping")
         }
+        if root["include"] != nil {
+            return .unreadable("the compose file `include`s other files, which this reader does not read")
+        }
         var services: [ComposeService] = []
         for entry in entries {
             do {

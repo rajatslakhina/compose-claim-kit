@@ -14,14 +14,18 @@ enum StatementReader {
     /// Negations that rule a sentence out unless they are the one right before the verb.
     static let strongNegators = ["not", "never", "cannot", "instead of", "rather than", "no longer"]
 
-    /// Each clause (split at `;` and "but") is read on its own; every rule wants its topic before its verb in the
-    /// same clause, and a negation anywhere but right before that verb means no statement.
+    /// Each clause (split at `;`, "but", ", and", ", while" and ", whereas") is read on its own. Every rule wants
+    /// its topic before its verb in the same clause, and a negation anywhere but right before that verb means no
+    /// statement.
     static func statements(in sentence: String) -> [Statement] {
         let raw = sentence.folded
         guard !Words.containsAny(normalized(raw), blockers) else { return [] }
         let negations = negationCount(normalized(raw))
         var found: [Statement] = []
-        for clause in raw.replacingOccurrences(of: " but ", with: ";").split(separator: ";").map(String.init) {
+        let separated = [" but ", ", and ", ", while ", ", whereas "].reduce(raw) {
+            $0.replacingOccurrences(of: $1, with: ";")
+        }
+        for clause in separated.split(separator: ";").map(String.init) {
             let text = normalized(clause)
             found += dependsOn(text, negations)
             found += dotEnv(text, negations)
@@ -81,7 +85,9 @@ enum StatementReader {
     }
 
     static func dotEnv(_ text: String, _ negations: Int) -> [Statement] {
-        guard text.contains(" .env "), !text.contains("env_file"), !text.contains("--env-file") else { return [] }
+        // "`.env` values reach the container through `environment:`" (`KEY: ${KEY}`) is right.
+        guard text.contains(" .env "), !text.contains("env_file"), !text.contains("--env-file"),
+              !text.contains("environment"), !text.contains("${") else { return [] }
         if Words.containsAny(text, ["substitution", "interpolation", "substitute", "interpolate"]),
            Words.containsAny(text, ["only", "used for", "is for", "used to"]),
            !Words.containsAny(text, ["container", "containers"]) || Words.containsAny(text, ["not", "n't"]) {
@@ -168,6 +174,8 @@ enum StatementReader {
         }
         let verbs = ["publish", "publishes", "published", "reachable", "accessible", "available"]
         guard let negated = polarity(text, topics: ["expose"], verbs: verbs, negations: negations) else { return [] }
+        // "... while `ports` publishes it to the host": the host belongs to `ports`.
+        if !negated, Words.contains(text, "ports") { return [] }
         return [negated ? .exposeStaysInternal : .exposePublishes]
     }
 

@@ -35,7 +35,7 @@ struct StatementTests {
         ("Containers cannot reach other services on localhost.", .localhostIsOwnContainer),
         ("Docker Compose passes every variable in `.env` to the containers.", .dotEnvReachesContainer),
         ("Of the shell and `.env`, `.env` wins over the shell.", .dotEnvBeatsShell),
-        ("The shell overrides `.env`, and `.env` overrides nothing else.", .shellBeatsDotEnv),
+        ("The shell overrides `.env`, which overrides the defaults.", .shellBeatsDotEnv),
         ("It overrides defaults, and `.env` beats the shell.", .dotEnvBeatsShell)
     ])
     func reads(sentence: String, statement: Statement) {

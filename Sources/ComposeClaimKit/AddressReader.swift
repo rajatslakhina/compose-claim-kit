@@ -65,6 +65,8 @@ enum AddressReader {
             let loopback = ComposeClaim.Address(vantage: .host, host: address.host, port: address.port).isLoopback
             let vantage: ComposeVantage
             if loopback {
+                // "The `frontend` runs in your browser and calls `localhost:8000`": both readings are possible.
+                if fromHost, fromContainer { continue }
                 if named.count == 1, fromContainer {
                     vantage = .service(named[0].name)
                 } else if fromHost {

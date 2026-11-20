@@ -167,11 +167,11 @@ YAML, and a conversation where a mistake is repeated. The output in
 
 ![tests](Screenshots/tests.svg)
 
-| Gate | Result (1.0.0) |
+| Gate | Result (1.0.1) |
 |---|---|
 | `swift build` | 0 warnings, 0 errors (Swift 6.4.2) |
-| `swift test --enable-code-coverage --no-parallel` | 53 tests in 11 suites, 280 parameterized cases, 0 failures |
-| `llvm-cov report` (library) | **100.00% lines (1975/1975) and functions (411/411) on all 22 files**; regions 98.95% (1316/1330) |
+| `swift test --enable-code-coverage --no-parallel` | 55 tests in 12 suites, 284 parameterized cases, 0 failures |
+| `llvm-cov report` (library) | **100.00% lines (1990/1990) and functions (412/412) on all 22 files**; regions 98.88% (1325/1340) |
 | `swiftlint lint --strict` | 0 violations, 25 files |
 
 Coverage is measured with `--no-parallel`: Swift Testing runs tests in parallel, and its profile counters can drop
@@ -189,17 +189,18 @@ published port) and `localhost:5432` were refused. From the host, `localhost:543
 ports (postgres, mysql, mariadb, redis, mongo, memcached, rabbitmq, nginx, httpd) were read from each image's
 config in the Docker Hub registry.
 
-**Probes.** These are written from real answer shapes, not from the readers. 28 correct answers stay quiet,
-including multi-clause sentences with negations. 12 wrong answers are caught; the two whose mistake the readers
-can't pin down stay unflagged. Sentences from 7 other domains (bash, Kubernetes, Jetpack Compose, regex, nginx,
+**Probes.** These are written from real answer shapes, not from the readers. 32 correct answers stay quiet,
+including multi-clause sentences with negations and contrasts ("`expose` ... other containers, while `ports` ...
+the host"). Of 12 wrong answers, 10 are caught with the right slip; the two whose mistake the readers can't pin
+down stay unflagged. Sentences from 7 other domains (bash, Kubernetes, Jetpack Compose, regex, nginx,
 GitHub Actions, Express) make no claim, and so does a later turn on another topic.
 
 ## Limits
 
 - Override files and `-f a.yaml -f b.yaml` merges are not read. An answer with two compose files and an override
   is unreadable.
-- `extends`, `include`, profiles, `network_mode`, custom `networks:`, `links` and `extra_hosts` make claims about
-  the service unchecked.
+- A top-level `include:` makes the file unreadable. `extends`, `network_mode`, custom `networks:`, `links` and
+  `extra_hosts` make claims about the service unchecked. `profiles:` is not read.
 - Only ports listed in the file, plus the 9 official images above, count as a container's ports. A program that
   listens on an undeclared port leaves a claim unchecked.
 - A one-command prefix (`TAG=1.26 docker compose up`) is not carried into the conversation. Only `export` lines are.
@@ -208,6 +209,10 @@ GitHub Actions, Express) make no claim, and so does a later turn on another topi
 
 ## Versions
 
+- **1.0.1**: correct contrast sentences stay quiet. Clauses also split at ", and", ", while" and ", whereas";
+  `expose` is not said to publish when the clause names `ports`; `.env` is not said to reach the container when the
+  sentence names `environment`; a `localhost` address in a sentence with both a host cue ("browser") and a
+  container cue ("calls") makes no claim. A top-level `include:` makes the file unreadable.
 - **1.0.0**: first release.
 
 ## Part of a series

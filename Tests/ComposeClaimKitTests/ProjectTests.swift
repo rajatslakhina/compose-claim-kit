@@ -73,6 +73,7 @@ struct ProjectTests {
     @Test(arguments: [
         ("services:\n  a:\n    image: &x y\n", "an anchor"),
         ("version: '3'\n", "no `services:`"),
+        ("include:\n  - other.yaml\nservices:\n  a:\n    image: x\n", "`include`s other files"),
         ("services:\n  a:\n    image: ${TAG:?set TAG first}\n", "set TAG first"),
         ("services:\n  a:\n    image: ${TAG?}\n", "required variable TAG is missing a value"),
         ("services:\n  a:\n    ports:\n      - \"8000-8001:9000-9002\"\n", "refuses the port"),
