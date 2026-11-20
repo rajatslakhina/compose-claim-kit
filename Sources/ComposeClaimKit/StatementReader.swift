@@ -64,8 +64,8 @@ enum StatementReader {
         guard Words.containsAny(text, ["container", "containers", "inside the app", "your app's process"]) else {
             return []
         }
-        let verbs = ["available", "passed", "set", "injected", "visible", "loaded", "reach", "reaches", "end up",
-                     "ends up", "become", "becomes", "sent", "exported", "copied"]
+        let verbs = ["available", "passed", "passes", "pass", "set", "injected", "injects", "visible", "loaded",
+                     "reach", "reaches", "end up", "ends up", "become", "becomes", "sent", "exported", "copied"]
         guard let negated = negated(text, before: verbs) else { return [] }
         return [negated ? .dotEnvForSubstitution : .dotEnvReachesContainer]
     }
@@ -155,7 +155,7 @@ enum StatementReader {
         let local = ["only from localhost", "only reachable from localhost", "only on localhost",
                      "only from your machine", "only accessible from your machine", "only locally",
                      "only from the host", "only reachable from your machine", "only reachable locally",
-                     "only from this machine"]
+                     "only from this machine", "localhost only", "only to localhost", "only bound to localhost"]
         if local.contains(where: text.contains) { return [.publishesOnLocalhostOnly] }
         let every = ["all interfaces", "0.0.0.0", "every interface", "from other machines", "from your network",
                      "from anywhere", "on your lan", "every network interface"]
