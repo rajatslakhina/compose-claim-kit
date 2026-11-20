@@ -42,7 +42,7 @@ enum ComposeYAML {
         var quote: Character?
         var previous: Character?
         var output = ""
-        var characters = Array(line)[...]
+        var characters = ArraySlice(line)
         while let character = characters.popFirst() {
             if let open = quote {
                 if character == open, open == "'", characters.first == "'" {
@@ -96,6 +96,8 @@ enum ComposeYAML {
                 if rest.isEmpty {
                     index += 1
                     items.append(try nested(after: indent, sameIndentSequence: false))
+                } else if isItem(rest) {
+                    throw Unsupported(reason: "a sequence inside a sequence item (line \(line.number))")
                 } else if ComposeYAML.key(rest) != nil {
                     // "- key: value": a mapping whose first key sits where the text after the dash starts.
                     let column = indent + 1 + afterDash.prefix { $0 == " " }.count

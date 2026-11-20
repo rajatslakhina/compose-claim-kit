@@ -12,7 +12,7 @@ struct ComposeEvaluator {
         case let .line(line, service): judgeLine(line, service, claim)
         }
         if case .caveat = finding.outcome, !policy.reportsCaveats {
-            return ComposeFinding(claim: claim, outcome: .exact, actual: finding.actual)
+            return ComposeFinding(claim: claim, outcome: .exact, actual: finding.detail)
         }
         return finding
     }
@@ -155,7 +155,8 @@ struct ComposeEvaluator {
                            actual: "service \"\(service)\" depends on undefined service \"\(name)\"")
         case let .healthyWithoutHealthcheck(name):
             ComposeFinding(claim: claim, outcome: .caveat(.imageMayHaveHealthcheck),
-                           actual: "dependency failed to start: container <project>-\(name)-1 has no healthcheck configured")
+                           actual: "dependency failed to start: container <project>-\(name)-1 has no healthcheck "
+                               + "configured")
         }
     }
 }

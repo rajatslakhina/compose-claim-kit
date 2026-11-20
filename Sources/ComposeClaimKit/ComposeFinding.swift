@@ -64,14 +64,19 @@ public struct ComposeFinding: Sendable, Hashable {
     public let claim: ComposeClaim
     public let outcome: Outcome
     /// What compose or Docker actually does, in words, where the claim gets it wrong or needs a note.
-    public let actual: String?
+    public var actual: String? {
+        detail.isEmpty ? nil : detail
+    }
+
+    /// `actual`, or empty.
+    let detail: String
     /// Flagged in an earlier review of the same conversation (set by `ComposeLedger`).
     public internal(set) var isRepeated = false
 
-    init(claim: ComposeClaim, outcome: Outcome, actual: String? = nil) {
+    init(claim: ComposeClaim, outcome: Outcome, actual: String = "") {
         self.claim = claim
         self.outcome = outcome
-        self.actual = actual
+        detail = actual
     }
 
     public var severity: Severity {

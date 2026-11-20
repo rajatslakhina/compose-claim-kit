@@ -35,8 +35,8 @@ enum AddressReader {
         guard let colon = text.lastIndex(of: ":") else { return nil }
         let host = String(text[..<colon])
         guard let port = Int(text[text.index(after: colon)...]), (1...65535).contains(port), !host.isEmpty,
-              host == "[::1]" || host.allSatisfy({ $0.isLetter || $0.isNumber || ".-_".contains($0) }),
-              host.contains(where: \.isLetter) || host.contains(".") else { return nil }
+              host == "[::1]" || (host.allSatisfy({ $0.isLetter || $0.isNumber || ".-_".contains($0) })
+                  && (host.contains(where: \.isLetter) || host.contains("."))) else { return nil }
         return Found(host: host, port: port)
     }
 
@@ -84,10 +84,11 @@ enum AddressReader {
         var claims: [ComposeClaim] = []
         for service in project.services {
             for variable in service.environment {
-                for address in addresses(in: variable.value ?? "", project: project) {
+                guard let value = variable.value else { continue }
+                for address in addresses(in: value, project: project) {
                     let claim = ComposeClaim.Address(vantage: .service(service.name), host: address.host,
                                                      port: address.port, variable: variable.name)
-                    let sentence = "\(service.name): \(variable.name)=\(variable.value ?? "")"
+                    let sentence = "\(service.name): \(variable.name)=\(value)"
                     claims.append(ComposeClaim(subject: .address(claim), sentence: sentence, scene: scene))
                 }
             }

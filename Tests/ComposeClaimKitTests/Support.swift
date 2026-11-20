@@ -16,12 +16,12 @@ func project(_ source: String, _ variables: Variables = Variables()) -> ComposeP
     return nil
 }
 
-func reason(_ source: String) -> String? {
+func unreadableReason(_ source: String) -> String? {
     if case let .unreadable(reason) = ComposeProject.read(source) { return reason }
     return nil
 }
 
-func scene(_ source: String, _ variables: Variables = Variables()) -> Scene {
+func sceneOf(_ source: String, _ variables: Variables = Variables()) -> Scene {
     Scene(reading: ComposeProject.read(source, variables: variables), variables: variables)
 }
 

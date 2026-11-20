@@ -12,8 +12,12 @@ extension ComposeFinding {
 
     func addressExplanation(_ address: ComposeClaim.Address) -> String {
         let said = "`\(address.host):\(address.port)`"
-        let place = address.variable.map { "`\($0)` in `\(Self.from(address) ?? "")` (\(said))" } ?? said
-        let actual = self.actual ?? ""
+        let place = if let variable = address.variable, case let .service(name?) = address.vantage {
+            "`\(variable)` in `\(name)` (\(said))"
+        } else {
+            said
+        }
+        let actual = detail
         switch outcome {
         case .exact:
             let detail = actual.isEmpty ? "" : " (\(actual))"
@@ -22,18 +26,13 @@ extension ComposeFinding {
             return "\(place) may work \(Self.vantage(address)): \(actual), and Docker picks one of those host ports "
                 + "at start."
         case .caveat:
-            return "\(place): that works only where the value is read on the host (a browser); from inside "
-                + "`\(Self.from(address) ?? "")` the service is \(actual)."
+            return "\(place): that works only where the value is read on the host (a browser); "
+                + "\(Self.vantage(address)) the service is \(actual)."
         case let .unchecked(reason):
             return "\(place) was not checked: \(reason)."
         case let .wrong(slip):
             return "\(place) does not work \(Self.vantage(address)): \(Self.addressReason(slip, address, actual))."
         }
-    }
-
-    static func from(_ address: ComposeClaim.Address) -> String? {
-        if case let .service(name) = address.vantage { return name }
-        return nil
     }
 
     static func vantage(_ address: ComposeClaim.Address) -> String {
@@ -64,7 +63,7 @@ extension ComposeFinding {
         case let .unchecked(reason):
             "Host port \(published) to container port \(target) was not checked: \(reason)."
         case .wrong:
-            "The mapping is the other way round: \(actual ?? "") (compose writes `HOST:CONTAINER`)."
+            "The mapping is the other way round: \(detail) (compose writes `HOST:CONTAINER`)."
         }
     }
 
@@ -86,7 +85,7 @@ extension ComposeFinding {
         case let .unchecked(reason):
             return "\(expression) was not checked: \(reason)."
         case let .wrong(slip):
-            return "\(expression) does not give \(claimed)\(condition): it gives \(actual ?? "")"
+            return "\(expression) does not give \(claimed)\(condition): it gives \(detail)"
                 + " (\(Self.resolveReason(slip)))."
         }
     }
@@ -105,11 +104,11 @@ extension ComposeFinding {
         switch line {
         case let .undefinedDependency(name):
             "`\(service)` depends on `\(name)`, which the file does not define, so `docker compose` refuses the "
-                + "file with: \(actual ?? "")."
+                + "file with: \(detail)."
 
         case let .healthyWithoutHealthcheck(name):
             "`\(service)` waits for `\(name)` to be healthy, but `\(name)` has no `healthcheck:`; unless its image "
-                + "defines a HEALTHCHECK, `docker compose up` stops with: \(actual ?? "")."
+                + "defines a HEALTHCHECK, `docker compose up` stops with: \(detail)."
 
         }
     }

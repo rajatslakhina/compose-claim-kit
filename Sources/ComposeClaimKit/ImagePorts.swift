@@ -14,7 +14,6 @@ enum ImagePorts {
         if parts.first == "docker.io" { parts.removeFirst() }
         if parts.count == 2, parts[0] == "library" { parts.removeFirst() }
         guard parts.count == 1 else { return [] }
-        let repository = parts[0].split(separator: ":").first.map(String.init) ?? ""
-        return known[repository] ?? []
+        return known[String(parts[0].prefix { $0 != ":" })] ?? []
     }
 }

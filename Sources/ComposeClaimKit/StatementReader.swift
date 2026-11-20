@@ -8,13 +8,15 @@ enum StatementReader {
     static let blockers = ["would", "could", "might", "unless", "mistake", "misconception", "myth", "wrongly",
                            "incorrectly", "people think", "assume", "assumes", "assuming", "kubernetes", "k8s",
                            "github actions", "if you"]
-    static let negators = ["not", "never", "doesn't", "does not", "don't", "won't", "isn't", "aren't", "only"]
+    static let negators = ["not", "never", "doesn't", "does not", "don't", "won't", "isn't", "aren't", "only",
+                           "cannot", "can't"]
 
     static func statements(in sentence: String) -> [Statement] {
         let raw = sentence.folded
-        let text = " " + String(raw.replacingOccurrences(of: "`", with: "").map {
+        // A full stop goes only where it ends a word, so `.env` keeps its dot.
+        let text = (" " + String(raw.replacingOccurrences(of: "`", with: "").map {
             ",;!?()\"".contains($0) ? " " : $0
-        }) + " "
+        }) + " ").replacingOccurrences(of: ". ", with: " ")
         guard !Words.containsAny(text, blockers) else { return [] }
         var found: [Statement] = []
         found += dependsOn(text)
@@ -31,7 +33,12 @@ enum StatementReader {
     static func negated(_ text: String, before verbs: [String]) -> Bool? {
         let hits = verbs.compactMap { text.range(of: " " + $0 + " ") }
         guard let verb = hits.min(by: { $0.lowerBound < $1.lowerBound }) else { return nil }
-        let words = text[..<verb.lowerBound].split(separator: " ").suffix(3).joined(separator: " ")
+        return isNegated(String(text[..<verb.lowerBound]))
+    }
+
+    /// Whether the last three words of the text hold a negator.
+    static func isNegated(_ before: String) -> Bool {
+        let words = before.split(separator: " ").suffix(3).joined(separator: " ")
         return negators.contains { Words.contains(" " + words + " ", $0) } || words.hasSuffix("n't")
     }
 
@@ -77,7 +84,7 @@ enum StatementReader {
                             firstWins: .dotEnvBeatsShell, secondWins: .shellBeatsDotEnv)
         }
         if text.contains("env_file"), text.contains("environment") {
-            found += winner(text, first: ["env_file"], second: ["environment:", "environment "],
+            found += winner(text, first: ["env_file"], second: ["environment"],
                             firstWins: .envFileBeatsEnvironment, secondWins: .environmentBeatsEnvFile)
         }
         return found
@@ -101,7 +108,7 @@ enum StatementReader {
             } else {
                 continue
             }
-            let negatedVerb = negated(text, before: [String(text[verb]).trimmed]) ?? false
+            let negatedVerb = isNegated(String(text[..<verb.lowerBound]))
             return [(subjectIsFirst == active) != negatedVerb ? firstWins : secondWins]
         }
         return []
@@ -130,7 +137,7 @@ enum StatementReader {
         guard Words.containsAny(text, ["host", "your machine", "localhost", "browser", "outside", "laptop"]) else {
             return []
         }
-        let verbs = ["publish", "publishes", "make", "makes", "map", "maps", "open", "opens", "reachable",
+        let verbs = ["publish", "publishes", "published", "make", "makes", "map", "maps", "open", "opens", "reachable",
                      "accessible", "available"]
         guard let negated = negated(text, before: verbs) else { return [] }
         return [negated ? .exposeStaysInternal : .exposePublishes]

@@ -27,7 +27,7 @@ enum Interpolation {
     static func resolve(_ text: String, _ variables: Variables,
                         _ semantics: Semantics = Semantics()) throws(Failure) -> Result {
         var resolver = Resolver(variables: variables, semantics: semantics)
-        let value = try resolver.resolve(Array(text)[...])
+        let value = try resolver.resolve(ArraySlice(text))
         return Result(value: value, unknown: resolver.unknown)
     }
 
@@ -90,7 +90,7 @@ enum Interpolation {
                 if character == "}" { depth -= 1 }
                 word.append(character)
             }
-            return try apply(operation, name: name, word: word[...])
+            return try apply(operation, name: name, word: ArraySlice(word))
         }
 
         mutating func apply(_ operation: String, name: String, word: ArraySlice<Character>) throws(Failure) -> String {
@@ -100,13 +100,16 @@ enum Interpolation {
             case "" where word.isEmpty:
                 return value ?? ""
             case ":-":
-                return value == nil || (isEmpty && !semantics.colonDashKeepsEmpty) ? try resolve(word) : value ?? ""
+                if let value, !(isEmpty && !semantics.colonDashKeepsEmpty) { return value }
+                return try resolve(word)
             case "-":
-                return value == nil || (isEmpty && semantics.dashCoversEmpty) ? try resolve(word) : value ?? ""
+                if let value, !(isEmpty && semantics.dashCoversEmpty) { return value }
+                return try resolve(word)
             case ":?", "?":
-                let fails = value == nil || (isEmpty && (operation == ":?" || semantics.questionCoversEmpty))
-                if fails { throw .required(name: name, message: try resolve(word)) }
-                return value ?? ""
+                guard let value, !(isEmpty && (operation == ":?" || semantics.questionCoversEmpty)) else {
+                    throw .required(name: name, message: try resolve(word))
+                }
+                return value
             case ":+":
                 return isEmpty ? "" : try resolve(word)
             case "+":

@@ -157,29 +157,34 @@ struct ServiceReader {
 
     func readPorts(_ node: ComposeNode, into service: inout ComposeService) throws(Failure) {
         for item in node["ports"]?.items ?? [] {
-            do {
-                if let short = item.text {
-                    var unknown: Set<String> = []
-                    service.ports += try PortMapping.parse(short: try resolve(short, unknown: &unknown))
-                    service.portsAssumeUnset.formUnion(unknown)
-                } else {
-                    service.ports += try PortMapping.parse(long: try interpolated(item))
-                }
-            } catch let error as PortMapping.Invalid {
-                throw .ports(error.text)
-            } catch let error as Failure {
-                throw error
-            } catch {
-                throw .malformed
+            if let short = item.text {
+                var unknown: Set<String> = []
+                let text = try resolve(short, unknown: &unknown)
+                service.portsAssumeUnset.formUnion(unknown)
+                service.ports += try ports { () throws(PortMapping.Invalid) in try PortMapping.parse(short: text) }
+            } else {
+                let long = try interpolated(item)
+                service.ports += try ports { () throws(PortMapping.Invalid) in try PortMapping.parse(long: long) }
             }
         }
     }
 
-    /// A mapping with every scalar value substituted.
+    func ports(_ parse: () throws(PortMapping.Invalid) -> [PortMapping]) throws(Failure) -> [PortMapping] {
+        do {
+            return try parse()
+        } catch {
+            throw .ports(error.text)
+        }
+    }
+
+    /// A long-syntax port with every scalar value substituted.
     func interpolated(_ node: ComposeNode) throws(Failure) -> ComposeNode {
+        guard let source = node.entries else { throw .ports("a port that is neither text nor a mapping") }
         var entries: [ComposeEntry] = []
-        for entry in node.entries ?? [] {
-            entries.append(ComposeEntry(key: entry.key, value: try text(entry.value).map(ComposeNode.scalar) ?? .null))
+        for entry in source {
+            if let value = try text(entry.value) {
+                entries.append(ComposeEntry(key: entry.key, value: .scalar(value)))
+            }
         }
         return .map(entries)
     }

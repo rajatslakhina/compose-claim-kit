@@ -39,7 +39,7 @@ enum ResolveReader {
 
     /// The prose folded, with punctuation as space and a space at each end.
     static func spaced(_ text: String) -> String {
-        let plain = String(text.folded.map { ",;:!?()".contains($0) ? " " : $0 })
+        let plain = String(text.folded.map { ",;:!?().".contains($0) ? " " : $0 })
         return " " + plain.split(separator: " ").joined(separator: " ") + " "
     }
 
